@@ -1,38 +1,44 @@
 # 📡 Homelab Sentinel - Dashboard de Monitoreo Multi-Servidor
 
-**Homelab Sentinel** es un dashboard moderno y ligero para monitorear el estado de múltiples servidores en tiempo real. Obtiene métricas clave como uso de CPU, memoria RAM, espacio en disco y uptime, tanto del equipo local como de servidores remotos vía SSH. Ideal para homelabs, pequeñas oficinas o entornos de desarrollo.
+**Homelab Sentinel** es un dashboard moderno, ligero y visualmente atractivo para monitorear el estado de múltiples servidores en tiempo real. Obtiene métricas clave como uso de CPU, memoria RAM, espacio en disco, temperatura, tráfico de red y uptime, tanto del equipo local como de servidores remotos.
 
-## ✨ Características
+![Version](https://img.shields.io/badge/version-2.0.0-blue)
+![Node](https://img.shields.io/badge/node-%3E%3D14-green)
+![License](https://img.shields.io/badge/license-MIT-orange)
 
-- 📊 **Métricas en tiempo real**: CPU, RAM, disco y uptime.
-- 🖥️ **Soporte multi-servidor**: Monitorea tu máquina local y múltiples servidores remotos.
-- 🎮 **Modo simulación integrado**: Si no tienes servidores reales, genera datos ficticios automáticamente para pruebas.
-- 🔄 **Actualización automática**: Los datos se refrescan cada 30 segundos sin recargar la página.
-- 🎨 **Interfaz limpia y responsive**: Construida con Bootstrap 5, se ve bien en cualquier dispositivo.
-- 🛡️ **Preparado para producción**: Fácil de extender con autenticación, alertas, etc.
-- ☁️ **Listo para desplegar en la nube**: Compatible con AWS, Google Cloud, o cualquier VPS.
+## ✨ Características Principales
+
+- 📊 **Gráficos en tiempo real**: Visualiza la evolución de CPU y RAM con Chart.js
+- 🖥️ **Soporte multi-servidor**: Monitorea tu máquina local + hasta 5 servidores remotos
+- 🎮 **Dos modos de operación**:
+  - **Modo Simulación** (por defecto): Datos ficticios inteligentes para pruebas
+  - **Modo Real**: Conexión SSH a servidores reales (requiere configuración)
+- 🌡️ **Métricas avanzadas**: CPU, RAM, temperatura, procesos, red, disco y uptime
+- 🎨 **Diseño profesional**: Interfaz responsive con Bootstrap 5 y modo oscuro automático
+- 🔄 **Actualización automática**: Datos frescos cada 30 segundos sin recargar
+- 🏷️ **Roles personalizados**: Comportamiento diferente según el tipo de servidor (web, DB, storage...)
 
 ---
 
-## 🛠️ Tecnologías utilizadas
+## 🛠️ Tecnologías Utilizadas
 
-| Backend | Frontend | Otras |
-|--------|----------|-------|
+| Backend | Frontend | Librerías Destacadas |
+|---------|----------|----------------------|
 | Node.js | HTML5 | systeminformation (métricas locales) |
-| Express | CSS3 | ssh2 (conexiones SSH - opcional) |
-| JavaScript | Bootstrap 5 | dotenv (variables de entorno) |
+| Express | CSS3 | chart.js (gráficos interactivos) |
+| JavaScript | Bootstrap 5 | ssh2 (conexiones SSH) |
 
 ---
 
-## 📋 Requisitos previos
+## 📋 Requisitos Previos
 
 - **Node.js** (v14 o superior)
 - **npm** (incluido con Node.js)
-- (Opcional) Acceso SSH a servidores remotos para modo real
+- **(Opcional)** Acceso SSH a servidores remotos para modo real
 
 ---
 
-## 🚀 Instalación y uso
+## 🚀 Instalación
 
 ### 1. Clonar el repositorio
 ```bash
@@ -45,152 +51,314 @@ cd homelab-sentinel
 npm install
 ```
 
-### 3. Ejecutar el dashboard
-
-#### Modo simulación (sin servidores reales)
-```bash
-npm start
-```
-o directamente:
-```bash
-node app.js
-```
-
-Verás el mensaje:  
-`🎮 Modo simulación activado. Los servidores remotos muestran datos ficticios.`
-
-Abre tu navegador en `http://localhost:3000`
-
-#### Modo real (con servidores SSH)
-1. Crea un archivo `servers.json` en la raíz (basado en `servers.example.json`).
-2. Asegúrate de que los servidores sean accesibles por SSH.
-3. Ejecuta `npm start`.
+Esto instalará todas las dependencias necesarias:
+- `express` - Servidor web
+- `systeminformation` - Métricas del sistema local
+- `chart.js` - Gráficos interactivos
+- `nodemon` - Recarga automática en desarrollo
 
 ---
 
-## ⚙️ Configuración avanzada
+## 🎮 Modos de Operación
 
-### Añadir servidores reales
-Crea un archivo `servers.json` con la siguiente estructura:
+### 📊 MODO SIMULACIÓN (POR DEFECTO) - Para pruebas y desarrollo
+
+El modo simulación es el que se activa automáticamente cuando **no existe** el archivo `servers.json`. Genera datos ficticios inteligentes que simulan el comportamiento de servidores reales.
+
+#### Características del modo simulación:
+- **5 servidores preconfigurados** con diferentes roles:
+  - 🌐 Servidor Web (carga media-alta)
+  - 🗄️ Base de datos (alto consumo de RAM)
+  - 💾 NAS/Storage (discos grandes, CPU baja)
+  - ⚙️ Servidor de aplicaciones (carga variable)
+  - 🔒 Router/Firewall (métricas de red)
+- **Patrones de carga según hora del día**:
+  - Horario pico (9-18h): +30% de carga
+  - Horario valle: -20% de carga
+- **Métricas coherentes** entre sí (ej: RAM usada ≤ RAM total)
+- **Temperaturas realistas** (35-65°C según carga)
+- **Tráfico de red variable**
+
+#### Ejecutar en modo simulación:
+```bash
+npm start
+# o
+node app.js
+```
+
+Verás en la consola:
+```
+🚀 Servidor corriendo en http://localhost:3000
+📊 Dashboard mejorado con gráficos en tiempo real
+🎮 Modo simulación activado. Métricas mejoradas con roles personalizados.
+⚠️  No se encontró servers.json. Se usarán servidores simulados para pruebas.
+```
+
+Abre tu navegador en `http://localhost:3000` y disfruta del dashboard.
+
+---
+
+### 🖥️ MODO REAL - Para servidores físicos o VPS
+
+El modo real requiere crear un archivo de configuración con los datos de tus servidores y establecer conexión SSH.
+
+#### Configuración paso a paso:
+
+1. **Crear archivo `servers.json`** en la raíz del proyecto:
 
 ```json
 [
   {
-    "name": "Servidor Web",
+    "name": "Servidor Web Producción",
     "host": "192.168.1.10",
     "port": 22,
-    "username": "usuario",
-    "password": "contraseña",
+    "username": "admin",
+    "password": "tu_contraseña",
+    "role": "web",
     "os": "linux"
   },
   {
-    "name": "NAS",
+    "name": "Base de Datos Principal",
     "host": "192.168.1.20",
     "port": 22,
     "username": "root",
-    "privateKey": "-----BEGIN RSA PRIVATE KEY-----\n...\n-----END RSA PRIVATE KEY-----",
+    "privateKey": "-----BEGIN RSA PRIVATE KEY-----\nMIIEpAIBAAKCAQEA...\n-----END RSA PRIVATE KEY-----",
+    "role": "database",
+    "os": "linux"
+  },
+  {
+    "name": "NAS Backup",
+    "host": "192.168.1.30",
+    "port": 22,
+    "username": "backup",
+    "password": "backup123",
+    "role": "storage",
     "os": "linux"
   }
 ]
 ```
 
-> ⚠️ **Nunca subas este archivo a GitHub**. Añádelo a tu `.gitignore`.
+2. **Campos disponibles en `servers.json`**:
 
-### Variables de entorno (recomendado para producción)
-Crea un archivo `.env`:
+| Campo | Obligatorio | Descripción |
+|-------|-------------|-------------|
+| `name` | ✅ | Nombre descriptivo del servidor |
+| `host` | ✅ | IP o dominio del servidor |
+| `port` | ❌ | Puerto SSH (por defecto: 22) |
+| `username` | ✅ | Usuario SSH |
+| `password` | * | Contraseña (si no usas clave) |
+| `privateKey` | * | Clave privada RSA (si no usas password) |
+| `role` | ❌ | web/database/storage/network (para métricas personalizadas) |
+| `os` | ❌ | linux/windows (por defecto: linux) |
+
+> ⚠️ **IMPORTANTE**: Añade `servers.json` a tu `.gitignore` para no subir credenciales a GitHub. ¡Ya está incluido por defecto!
+
+3. **Ejecutar en modo real**:
+```bash
+npm start
 ```
-PORT=3000
-SSH_TIMEOUT=5000
+
+Verás:
 ```
-Y usa `dotenv` para cargarlas.
+✅ 3 servidor(es) real(es) cargado(s) desde servers.json
+🚀 Servidor corriendo en http://localhost:3000
+📊 Dashboard mejorado con gráficos en tiempo real
+```
 
 ---
 
-## 📁 Estructura del proyecto
+## 📊 Dashboard - Guía de Uso
+
+### Elementos del dashboard:
+
+1. **Cabecera superior**: Título y tiempo de actualización
+2. **Tarjetas de servidor**: Una por cada máquina monitoreada
+3. **Badges de estado**: CPU y RAM con colores indicativos
+   - 🟢 Verde: < 50%
+   - 🟡 Amarillo: 50-80%
+   - 🔴 Rojo: > 80%
+4. **Métricas en tiempo real**:
+   - CPU % con barra de progreso
+   - RAM usada/total con porcentaje
+   - Temperatura (°C)
+   - Número de procesos
+   - Uso de disco por partición
+   - Tráfico de red (RX/TX)
+   - Uptime formateado
+5. **Gráfico interactivo**: Evolución CPU y RAM (últimos 20 puntos)
+6. **Indicador de actualización**: Esquina inferior derecha
+
+### Controles:
+- **Hover** sobre tarjetas: Efecto de elevación
+- **Click** en badges: (futura funcionalidad)
+- **Actualización automática**: Cada 30 segundos
+
+---
+
+## ⚙️ Configuración Avanzada
+
+### Variables de entorno (recomendado para producción)
+Crea un archivo `.env`:
+
+```env
+PORT=3000
+SSH_TIMEOUT=5000
+REFRESH_INTERVAL=30000
+```
+
+Luego instala dotenv:
+```bash
+npm install dotenv
+```
+
+Y modifica `app.js` para usarlo:
+```javascript
+require('dotenv').config();
+const PORT = process.env.PORT || 3000;
+```
+
+---
+
+## 📁 Estructura del Proyecto
 
 ```
 homelab-sentinel/
-├── app.js                  # Servidor Express principal
+├── app.js                  # Servidor Express con lógica principal
 ├── package.json            # Dependencias y scripts
-├── servers.json            # Configuración de servidores (opcional, ignorado por git)
+├── servers.json            # Configuración de servidores (ignorado por git)
 ├── .gitignore              # Archivos ignorados
+├── .env                    # Variables de entorno (opcional)
 ├── public/                 # Archivos estáticos
-│   └── index.html          # Interfaz de usuario
+│   └── index.html          # Dashboard con gráficos
 └── README.md               # Este archivo
 ```
 
 ---
 
-## ☁️ Despliegue en AWS (u otro VPS)
+## 🧪 Pruebas y Verificación
 
-### Opción 1: Usando el nivel gratuito de AWS (12 meses)
+Ejecuta este script en la consola del navegador (F12) para verificar:
 
-1. Lanza una instancia **t3.micro** (1 vCPU, 1 GB RAM) con Ubuntu.
-2. Conéctate por SSH:
-   ```bash
-   ssh -i tu-clave.pem ubuntu@<IP_PUBLICA>
-   ```
-3. Instala Node.js:
-   ```bash
-   curl -fsSL https://deb.nodesource.com/setup_18.x | sudo -E bash -
-   sudo apt install -y nodejs git
-   ```
-4. Clona el repositorio e instala:
-   ```bash
-   git clone https://github.com/tu-usuario/homelab-sentinel.git
-   cd homelab-sentinel
-   npm install
-   ```
-5. Ejecuta en segundo plano con **PM2**:
-   ```bash
-   sudo npm install -g pm2
-   pm2 start app.js --name sentinel
-   pm2 save
-   pm2 startup
-   ```
-6. Abre el puerto 3000 en el grupo de seguridad de AWS.
-7. ¡Accede a `http://<IP_PUBLICA>:3000`!
-
-### Opción 2: Usando Docker (próximamente)
-*Pendiente de implementar.*
+```javascript
+(function quickTest() {
+  console.log('🔍 HOMELAB SENTINEL - TEST RÁPIDO');
+  
+  // 1. Verificar elementos
+  const servers = document.querySelectorAll('.server-card');
+  const charts = document.querySelectorAll('canvas');
+  console.log(`📊 Servidores: ${servers.length}, Gráficos: ${charts.length}`);
+  
+  // 2. Verificar API
+  fetch('/api/status')
+    .then(r => r.json())
+    .then(data => {
+      console.log('✅ API OK:', {
+        modo: data.remote[0]?.name?.includes('simulado') ? 'SIMULACIÓN' : 'REAL',
+        servidores: data.remote?.length,
+        timestamp: data.timestamp
+      });
+    });
+  
+  // 3. Verificar actualización
+  const lastUpdate = document.getElementById('last-update')?.textContent;
+  console.log('⏱️', lastUpdate);
+})();
+```
 
 ---
 
-## 🧪 Próximas mejoras (Roadmap)
+## ☁️ Despliegue en Producción
 
-- [ ] **Conexión SSH real**: Implementar `ssh2` para métricas reales de servidores remotos.
-- [ ] **Alertas por Telegram**: Notificaciones cuando un servidor supere umbrales.
-- [ ] **Gráficos históricos**: Chart.js para visualizar tendencias.
-- [ ] **Autenticación básica**: Proteger el dashboard con usuario/contraseña.
-- [ ] **Soporte para Windows**: Adaptar comandos para servidores Windows (PowerShell remoto).
-- [ ] **Modo oscuro**: Tema claro/oscuro para la interfaz.
+### Opción 1: Servidor VPS (Ubuntu)
+
+```bash
+# Conectar por SSH
+ssh usuario@tu-servidor
+
+# Instalar Node.js 18
+curl -fsSL https://deb.nodesource.com/setup_18.x | sudo -E bash -
+sudo apt install -y nodejs git
+
+# Clonar e instalar
+git clone https://github.com/tu-usuario/homelab-sentinel.git
+cd homelab-sentinel
+npm install
+
+# Configurar PM2 (gestor de procesos)
+sudo npm install -g pm2
+pm2 start app.js --name sentinel
+pm2 save
+pm2 startup
+
+# Configurar firewall (si aplica)
+sudo ufw allow 3000/tcp
+```
+
+### Opción 2: Docker (próximamente)
+```bash
+# Dockerfile en desarrollo
+```
+
+---
+
+## 🧩 Solución de Problemas
+
+| Problema | Causa probable | Solución |
+|----------|----------------|----------|
+| Error "chart.js not found" | Dependencia faltante | `npm install chart.js` |
+| Puerto 3000 en uso | Otra app usando el puerto | `killall node` o cambiar puerto |
+| No aparecen gráficos | Historial insuficiente | Espera 2 ciclos (60s) |
+| Servidores en error | Conexión SSH falla | Verifica credenciales en servers.json |
+| Datos no se actualizan | Error de red | F12 → Consola → Comparte el error |
+
+---
+
+## 🗺️ Roadmap
+
+- [x] **Gráficos en tiempo real** (Chart.js)
+- [x] **Modo simulación mejorado** (roles, horarios)
+- [ ] **Conexión SSH real** con ssh2
+- [ ] **Alertas por Telegram/Email**
+- [ ] **Autenticación de usuarios**
+- [ ] **Soporte para Windows** (PowerShell remoto)
+- [ ] **Exportar datos a CSV**
+- [ ] **Panel de administración**
 
 ---
 
 ## 🤝 Contribuciones
 
-¿Tienes ideas para mejorar Homelab Sentinel? ¡Las contribuciones son bienvenidas!
+Las contribuciones son bienvenidas y apreciadas:
 
-1. Haz un fork del proyecto.
-2. Crea una rama (`git checkout -b feature/nueva-funcionalidad`).
-3. Haz commit de tus cambios (`git commit -am 'Añade nueva funcionalidad'`).
-4. Sube la rama (`git push origin feature/nueva-funcionalidad`).
-5. Abre un Pull Request.
+1. Fork el proyecto
+2. Crea tu rama (`git checkout -b feature/AmazingFeature`)
+3. Commit cambios (`git commit -m 'Add AmazingFeature'`)
+4. Push a la rama (`git push origin feature/AmazingFeature`)
+5. Abre un Pull Request
 
 ---
 
 ## 📄 Licencia
 
-Este proyecto está bajo la licencia MIT. Consulta el archivo [LICENSE](LICENSE) para más detalles.
+Distribuido bajo licencia MIT. Ver `LICENSE` para más información.
 
 ---
 
 ## 📬 Contacto
 
-**Alejandro González Santana**  
-- GitHub: [@AlejandroGlezSan](https://github.com/AlejandroGlezSan)  
-- Email: alejandroglezsan1993@gmail.com  
-- LinkedIn: https://www.linkedin.com/in/alejandro-gonzalez-santana-0233261a1/
+**Alejandro González Santana**
+- GitHub: [@AlejandroGlezSan](https://github.com/AlejandroGlezSan)
+- Email: alejandroglezsan1993@gmail.com
+- LinkedIn: [Alejandro González Santana](https://www.linkedin.com/in/alejandro-gonzalez-santana-0233261a1/)
+
+---
+
+## ⭐ Reconocimientos
+
+- [systeminformation](https://www.npmjs.com/package/systeminformation) - Librería de métricas
+- [Chart.js](https://www.chartjs.org/) - Gráficos interactivos
+- [Bootstrap](https://getbootstrap.com/) - Framework CSS
+- [Express](https://expressjs.com/) - Servidor web
 
 ---
 
@@ -198,12 +366,20 @@ Este proyecto está bajo la licencia MIT. Consulta el archivo [LICENSE](LICENSE)
 
 ---
 
-## 📸 Capturas de pantalla
+## 📸 Capturas de Pantalla
 
-proximamente
+### Dashboard Principal
+![Homelab Sentinel Dashboard](assets/screenshot.png)
 
-## 🎉 Reconocimientos
+*Vista principal del dashboard mostrando el servidor local y 5 servidores simulados con gráficos en tiempo real*
 
-- [systeminformation](https://www.npmjs.com/package/systeminformation) - Librería para métricas del sistema.
-- [Bootstrap](https://getbootstrap.com/) - Framework CSS.
-- [AWS Free Tier](https://aws.amazon.com/free/) - Infraestructura gratuita para pruebas.
+### Características visuales:
+- **Tarjetas interactivas** con efecto hover
+- **Gráficos dinámicos** de CPU y RAM
+- **Badges de estado** con códigos de color
+- **Modo oscuro automático** según preferencias del sistema
+- **Diseño responsive** para móviles y tablets
+
+---
+
+> 💡 **Nota**: La captura muestra el modo simulación con datos de ejemplo. En modo real, verás las métricas reales de tus servidores.

@@ -7,10 +7,16 @@
     "start": "node app.js",
     "dev": "nodemon app.js"
   },
-  "keywords": ["monitoring", "dashboard", "homelab", "ssh"],
+  "keywords": [
+    "monitoring",
+    "dashboard",
+    "homelab",
+    "ssh"
+  ],
   "author": "Alejandro González",
   "license": "MIT",
   "dependencies": {
+    "chart.js": "^4.5.1",
     "express": "^4.18.2",
     "systeminformation": "^5.21.7"
   },

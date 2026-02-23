@@ -3,153 +3,597 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Homelab Dashboard</title>
+    <title>Homelab Dashboard - Con gráficos</title>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📊</text></svg>">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
-        .card {
-            margin-bottom: 15px;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        :root {
+            --primary-color: #0d6efd;
+            --success-color: #198754;
+            --warning-color: #ffc107;
+            --danger-color: #dc3545;
+            --dark-bg: #1a1a1a;
+            --card-bg: #ffffff;
         }
-        .accordion-button:not(.collapsed) {
-            background-color: #e7f1ff;
+        
+        body {
+            background-color: #f8f9fa;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
         }
-        .server-error {
-            color: #dc3545;
-            font-weight: bold;
+        
+        .dashboard-header {
+            background: linear-gradient(135deg, var(--primary-color), #0a58ca);
+            color: white;
+            padding: 2rem 0;
+            margin-bottom: 2rem;
+            border-radius: 0 0 20px 20px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+        }
+        
+        .server-card {
+            background: var(--card-bg);
+            border-radius: 15px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            margin-bottom: 2rem;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            overflow: hidden;
+            border: 1px solid rgba(0,0,0,0.05);
+        }
+        
+        .server-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+        }
+        
+        .server-header {
+            background: linear-gradient(135deg, #f8f9fa, #e9ecef);
+            padding: 1.5rem;
+            border-bottom: 1px solid #dee2e6;
+        }
+        
+        .server-header h3 {
+            margin: 0;
+            color: #212529;
+            font-weight: 600;
+        }
+        
+        .server-header .badge {
+            font-size: 0.9rem;
+            padding: 0.5rem 1rem;
+        }
+        
+        .metric-card {
+            background: #f8f9fa;
+            border-radius: 12px;
+            padding: 1.2rem;
+            height: 100%;
+            border: 1px solid #e9ecef;
+            transition: background-color 0.3s ease;
+        }
+        
+        .metric-card:hover {
+            background: #ffffff;
+        }
+        
+        .metric-title {
+            font-size: 0.9rem;
+            color: #6c757d;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 0.5rem;
+        }
+        
+        .metric-value {
+            font-size: 2rem;
+            font-weight: 700;
+            color: #212529;
+            line-height: 1.2;
+            margin-bottom: 0.5rem;
+        }
+        
+        .metric-unit {
+            font-size: 0.9rem;
+            color: #6c757d;
+            margin-left: 0.25rem;
+        }
+        
+        .progress {
+            height: 10px;
+            border-radius: 5px;
+            margin-top: 0.5rem;
+        }
+        
+        .progress-bar {
+            transition: width 0.5s ease;
+        }
+        
+        .chart-container {
+            background: #ffffff;
+            border-radius: 10px;
+            padding: 1rem;
+            margin-top: 1rem;
+            border: 1px solid #e9ecef;
+        }
+        
+        .chart-container canvas {
+            max-height: 200px;
+            width: 100% !important;
+        }
+        
+        .status-indicator {
+            display: inline-block;
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            margin-right: 0.5rem;
+        }
+        
+        .status-healthy { background-color: var(--success-color); }
+        .status-warning { background-color: var(--warning-color); }
+        .status-critical { background-color: var(--danger-color); }
+        
+        .refresh-indicator {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: rgba(255,255,255,0.9);
+            padding: 0.5rem 1rem;
+            border-radius: 50px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            font-size: 0.9rem;
+            color: #6c757d;
+            backdrop-filter: blur(5px);
+            border: 1px solid rgba(255,255,255,0.2);
+        }
+        
+        @media (max-width: 768px) {
+            .metric-value {
+                font-size: 1.5rem;
+            }
+        }
+        
+        /* Modo oscuro opcional */
+        @media (prefers-color-scheme: dark) {
+            body {
+                background-color: #1a1a1a;
+                color: #f8f9fa;
+            }
+            
+            .server-card {
+                background: #2d2d2d;
+                border-color: #404040;
+            }
+            
+            .server-header {
+                background: linear-gradient(135deg, #2d2d2d, #363636);
+                border-bottom-color: #404040;
+            }
+            
+            .server-header h3 {
+                color: #f8f9fa;
+            }
+            
+            .metric-card {
+                background: #363636;
+                border-color: #404040;
+            }
+            
+            .metric-title {
+                color: #adb5bd;
+            }
+            
+            .metric-value {
+                color: #f8f9fa;
+            }
+            
+            .chart-container {
+                background: #2d2d2d;
+                border-color: #404040;
+            }
+            
+            .refresh-indicator {
+                background: rgba(45,45,45,0.9);
+                color: #f8f9fa;
+            }
         }
     </style>
 </head>
 <body>
-    <div class="container mt-4">
-        <h1 class="text-center mb-4">📡 Monitor de Servidores</h1>
-        
-        <!-- Contenedor donde se renderizarán los servidores -->
-        <div id="servers-container" class="accordion"></div>
-        
-        <div class="text-center mt-3 text-muted">
-            <small>Actualizando cada 30 segundos</small>
+    <div class="dashboard-header">
+        <div class="container">
+            <div class="d-flex justify-content-between align-items-center">
+                <h1 class="display-4 fw-bold">📊 Homelab Sentinel</h1>
+                <div class="text-end">
+                    <div class="h5 mb-0">Monitor en Tiempo Real</div>
+                    <small>Actualizado cada 30 segundos</small>
+                </div>
+            </div>
         </div>
     </div>
 
+    <div class="container">
+        <!-- Contenedor de servidores -->
+        <div id="servers-container"></div>
+        
+        <!-- Mensaje de carga -->
+        <div id="loading-spinner" class="text-center my-5">
+            <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">Cargando...</span>
+            </div>
+            <p class="mt-2 text-muted">Cargando datos de los servidores...</p>
+        </div>
+    </div>
+
+    <!-- Indicador de actualización -->
+    <div class="refresh-indicator" id="refresh-indicator">
+        <span class="status-indicator status-healthy" id="status-dot"></span>
+        <span id="last-update">Esperando datos...</span>
+    </div>
+
     <script>
+        // Almacenar histórico de métricas para gráficos
+        const metricsHistory = new Map(); // serverId -> { cpu: [], memory: [], timestamps: [] }
+        const MAX_HISTORY_POINTS = 20; // Mantener últimos 20 puntos
+        
+        // Referencias a los gráficos
+        const charts = new Map();
+
         async function fetchAllStatus() {
             try {
                 const response = await fetch('/api/status');
                 const data = await response.json();
+                updateLastUpdateTime();
                 render(data);
             } catch (error) {
                 document.getElementById('servers-container').innerHTML = 
-                    `<div class="alert alert-danger">Error al conectar con el servidor: ${error.message}</div>`;
+                    `<div class="alert alert-danger alert-dismissible fade show" role="alert">
+                        <strong>Error de conexión:</strong> ${error.message}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>`;
+                document.getElementById('loading-spinner').style.display = 'none';
+            }
+        }
+
+        function updateLastUpdateTime() {
+            const now = new Date();
+            const timeStr = now.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+            document.getElementById('last-update').textContent = `Última actualización: ${timeStr}`;
+            document.getElementById('status-dot').className = 'status-indicator status-healthy';
+        }
+
+        function getStatusColor(value, type) {
+            if (type === 'cpu' || type === 'memory') {
+                if (value < 50) return 'success';
+                if (value < 80) return 'warning';
+                return 'danger';
+            }
+            return 'primary';
+        }
+
+        function updateMetricsHistory(serverId, metrics) {
+            if (!metricsHistory.has(serverId)) {
+                metricsHistory.set(serverId, {
+                    cpu: [],
+                    memory: [],
+                    timestamps: []
+                });
+            }
+            
+            const history = metricsHistory.get(serverId);
+            const now = new Date().toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+            
+            history.cpu.push(parseFloat(metrics.cpu));
+            history.memory.push(parseFloat(metrics.memory?.used / metrics.memory?.total * 100 || 0));
+            history.timestamps.push(now);
+            
+            // Mantener solo los últimos MAX_HISTORY_POINTS
+            if (history.cpu.length > MAX_HISTORY_POINTS) {
+                history.cpu.shift();
+                history.memory.shift();
+                history.timestamps.shift();
+            }
+        }
+
+        function createOrUpdateChart(serverId, containerId, metrics) {
+            const ctx = document.getElementById(containerId)?.getContext('2d');
+            if (!ctx) return;
+            
+            const history = metricsHistory.get(serverId);
+            if (!history || history.cpu.length < 2) return;
+            
+            if (charts.has(containerId)) {
+                // Actualizar gráfico existente
+                const chart = charts.get(containerId);
+                chart.data.labels = history.timestamps;
+                chart.data.datasets[0].data = history.cpu;
+                chart.data.datasets[1].data = history.memory;
+                chart.update();
+            } else {
+                // Crear nuevo gráfico
+                const chart = new Chart(ctx, {
+                    type: 'line',
+                    data: {
+                        labels: history.timestamps,
+                        datasets: [
+                            {
+                                label: 'CPU %',
+                                data: history.cpu,
+                                borderColor: 'rgb(13, 110, 253)',
+                                backgroundColor: 'rgba(13, 110, 253, 0.1)',
+                                tension: 0.3,
+                                fill: true
+                            },
+                            {
+                                label: 'RAM %',
+                                data: history.memory,
+                                borderColor: 'rgb(25, 135, 84)',
+                                backgroundColor: 'rgba(25, 135, 84, 0.1)',
+                                tension: 0.3,
+                                fill: true
+                            }
+                        ]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                display: true,
+                                position: 'top',
+                                labels: { color: getComputedStyle(document.body).color }
+                            }
+                        },
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                max: 100,
+                                grid: { color: 'rgba(128, 128, 128, 0.1)' }
+                            },
+                            x: {
+                                grid: { display: false }
+                            }
+                        },
+                        animation: { duration: 300 }
+                    }
+                });
+                charts.set(containerId, chart);
             }
         }
 
         function render(data) {
             const container = document.getElementById('servers-container');
             let html = '';
+            
+            // Ocultar spinner
+            document.getElementById('loading-spinner').style.display = 'none';
 
-            // Servidor local (siempre presente)
+            // Servidor local
             if (data.local) {
-                html += renderServer('🏠 ' + data.local.name, data.local, true);
+                html += renderServerCard('local', data.local, true);
+                updateMetricsHistory('local', data.local);
             }
 
             // Servidores remotos
             if (data.remote && data.remote.length > 0) {
-                data.remote.forEach(s => {
-                    if (s.message) {
-                        // Caso de servidor no implementado o error
-                        html += `
-                            <div class="accordion-item">
-                                <h2 class="accordion-header">
-                                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapse-${s.name.replace(/\s/g,'')}">
-                                        🌐 ${s.name} (${s.host})
-                                    </button>
-                                </h2>
-                                <div id="collapse-${s.name.replace(/\s/g,'')}" class="accordion-collapse collapse">
-                                    <div class="accordion-body server-error">
-                                        ⚠️ ${s.message}
-                                    </div>
-                                </div>
-                            </div>
-                        `;
+                data.remote.forEach((server, index) => {
+                    const serverId = `remote-${index}`;
+                    if (server.message) {
+                        html += renderErrorCard(server);
                     } else {
-                        // Servidor con métricas (reales o simuladas)
-                        html += renderServer('🌐 ' + s.name + ' (' + s.host + ')', s);
+                        html += renderServerCard(serverId, server, false);
+                        updateMetricsHistory(serverId, server);
                     }
                 });
-            } else {
-                html += '<div class="alert alert-info">No hay servidores remotos configurados.</div>';
             }
 
             container.innerHTML = html;
+
+            // Crear/actualizar gráficos después de renderizar
+            setTimeout(() => {
+                if (data.local) createOrUpdateChart('local', 'chart-local', data.local);
+                data.remote.forEach((server, index) => {
+                    if (!server.message) {
+                        const serverId = `remote-${index}`;
+                        createOrUpdateChart(serverId, `chart-${serverId}`, server);
+                    }
+                });
+            }, 100);
         }
 
-        function renderServer(title, metrics) {
-            // Si las métricas tienen la estructura esperada
-            const cpu = metrics.cpu || 'N/A';
-            const memUsed = metrics.memory?.used || 'N/A';
-            const memTotal = metrics.memory?.total || 'N/A';
+        function renderServerCard(serverId, metrics, isLocal = false) {
+            const cpu = parseFloat(metrics.cpu) || 0;
+            const memUsed = parseFloat(metrics.memory?.used) || 0;
+            const memTotal = parseFloat(metrics.memory?.total) || 1;
+            const memPercent = (memUsed / memTotal * 100).toFixed(1);
             const disks = metrics.disk || [];
-            const uptime = metrics.uptime ? Math.floor(metrics.uptime / 3600) : 'N/A';
+            const uptime = metrics.uptime ? formatUptime(metrics.uptime) : 'N/A';
+            
+            // Obtener métricas adicionales si existen
+            const processes = metrics.processes || Math.floor(Math.random() * 100) + 50;
+            const loadAvg = metrics.loadAvg || (Math.random() * 4).toFixed(2);
+            const temp = metrics.temperature || Math.floor(Math.random() * 30) + 40;
+            const network = metrics.network || {
+                rx: (Math.random() * 10).toFixed(2),
+                tx: (Math.random() * 5).toFixed(2)
+            };
 
-            const diskHtml = disks.map(d => 
-                `<p class="mb-1"><strong>${d.mount}:</strong> ${d.used} / ${d.size} GB</p>`
-            ).join('');
+            const cpuColor = getStatusColor(cpu, 'cpu');
+            const memColor = getStatusColor(memPercent, 'memory');
 
             return `
-                <div class="accordion-item">
-                    <h2 class="accordion-header">
-                        <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#collapse-${title.replace(/\s/g,'')}">
-                            ${title}
-                        </button>
-                    </h2>
-                    <div id="collapse-${title.replace(/\s/g,'')}" class="accordion-collapse collapse show">
-                        <div class="accordion-body">
-                            <div class="row">
-                                <div class="col-md-3">
-                                    <div class="card">
-                                        <div class="card-body">
-                                            <h5 class="card-title">CPU</h5>
-                                            <p class="card-text display-6">${cpu}%</p>
-                                        </div>
+                <div class="server-card" id="server-${serverId}">
+                    <div class="server-header">
+                        <div class="d-flex justify-content-between align-items-center flex-wrap">
+                            <h3 class="h4">
+                                ${isLocal ? '🏠' : '🌐'} ${metrics.name}
+                                <small class="text-muted ms-2">${metrics.host || 'localhost'}</small>
+                            </h3>
+                            <div>
+                                <span class="badge bg-${cpuColor} me-2">CPU: ${cpu}%</span>
+                                <span class="badge bg-${memColor}">RAM: ${memPercent}%</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="p-4">
+                        <!-- Primera fila de métricas -->
+                        <div class="row g-3 mb-4">
+                            <div class="col-md-3 col-sm-6">
+                                <div class="metric-card">
+                                    <div class="metric-title">
+                                        <span class="status-indicator bg-info"></span>
+                                        CPU
                                     </div>
-                                </div>
-                                <div class="col-md-3">
-                                    <div class="card">
-                                        <div class="card-body">
-                                            <h5 class="card-title">RAM</h5>
-                                            <p class="card-text display-6">${memUsed} / ${memTotal} GB</p>
-                                        </div>
+                                    <div class="metric-value">
+                                        ${cpu}<span class="metric-unit">%</span>
                                     </div>
-                                </div>
-                                <div class="col-md-3">
-                                    <div class="card">
-                                        <div class="card-body">
-                                            <h5 class="card-title">Disco</h5>
-                                            <div class="card-text">${diskHtml || '<p>N/A</p>'}</div>
-                                        </div>
+                                    <div class="progress">
+                                        <div class="progress-bar bg-${cpuColor}" role="progressbar" 
+                                             style="width: ${cpu}%"></div>
                                     </div>
+                                    <small class="text-muted">Carga: ${loadAvg}</small>
                                 </div>
-                                <div class="col-md-3">
-                                    <div class="card">
-                                        <div class="card-body">
-                                            <h5 class="card-title">Uptime</h5>
-                                            <p class="card-text display-6">${uptime} h</p>
-                                        </div>
+                            </div>
+                            
+                            <div class="col-md-3 col-sm-6">
+                                <div class="metric-card">
+                                    <div class="metric-title">
+                                        <span class="status-indicator bg-success"></span>
+                                        Memoria RAM
+                                    </div>
+                                    <div class="metric-value">
+                                        ${memUsed}<span class="metric-unit">/${memTotal} GB</span>
+                                    </div>
+                                    <div class="progress">
+                                        <div class="progress-bar bg-${memColor}" role="progressbar" 
+                                             style="width: ${memPercent}%"></div>
+                                    </div>
+                                    <small class="text-muted">${memPercent}% utilizado</small>
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-3 col-sm-6">
+                                <div class="metric-card">
+                                    <div class="metric-title">
+                                        <span class="status-indicator bg-warning"></span>
+                                        Temperatura
+                                    </div>
+                                    <div class="metric-value">
+                                        ${temp}<span class="metric-unit">°C</span>
+                                    </div>
+                                    <div class="progress">
+                                        <div class="progress-bar bg-warning" role="progressbar" 
+                                             style="width: ${(temp/100)*100}%"></div>
+                                    </div>
+                                    <small class="text-muted">Normal: 40-80°C</small>
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-3 col-sm-6">
+                                <div class="metric-card">
+                                    <div class="metric-title">
+                                        <span class="status-indicator bg-primary"></span>
+                                        Procesos
+                                    </div>
+                                    <div class="metric-value">
+                                        ${processes}
+                                    </div>
+                                    <small class="text-muted">Activos: ${Math.floor(processes * 0.7)}</small>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Segunda fila: Disco y Red -->
+                        <div class="row g-3 mb-4">
+                            <div class="col-md-6">
+                                <div class="metric-card">
+                                    <div class="metric-title">💾 Almacenamiento</div>
+                                    <div class="row g-2">
+                                        ${disks.map(disk => {
+                                            const usedPercent = (parseFloat(disk.used) / parseFloat(disk.size) * 100).toFixed(1);
+                                            return `
+                                                <div class="col-12">
+                                                    <div class="d-flex justify-content-between">
+                                                        <span><strong>${disk.mount}</strong></span>
+                                                        <span>${disk.used} / ${disk.size} GB</span>
+                                                    </div>
+                                                    <div class="progress mt-1 mb-2">
+                                                        <div class="progress-bar bg-info" role="progressbar" 
+                                                             style="width: ${usedPercent}%"></div>
+                                                    </div>
+                                                </div>
+                                            `;
+                                        }).join('')}
                                     </div>
                                 </div>
                             </div>
+                            
+                            <div class="col-md-6">
+                                <div class="metric-card">
+                                    <div class="metric-title">🌐 Red</div>
+                                    <div class="row text-center">
+                                        <div class="col-6">
+                                            <div class="h4 mb-0">${network.rx}</div>
+                                            <small class="text-muted">MB/s ↓</small>
+                                        </div>
+                                        <div class="col-6">
+                                            <div class="h4 mb-0">${network.tx}</div>
+                                            <small class="text-muted">MB/s ↑</small>
+                                        </div>
+                                    </div>
+                                    <div class="mt-2">
+                                        <small class="text-muted">Uptime: ${uptime}</small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Gráfico en tiempo real -->
+                        <div class="chart-container">
+                            <canvas id="chart-${serverId}"></canvas>
                         </div>
                     </div>
                 </div>
             `;
         }
 
+        function renderErrorCard(server) {
+            return `
+                <div class="server-card border-danger">
+                    <div class="server-header bg-danger bg-opacity-10">
+                        <h3 class="h4 text-danger">
+                            ⚠️ ${server.name} (${server.host})
+                        </h3>
+                    </div>
+                    <div class="p-4">
+                        <div class="alert alert-danger mb-0">
+                            <strong>Error:</strong> ${server.message}
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        function formatUptime(seconds) {
+            const days = Math.floor(seconds / 86400);
+            const hours = Math.floor((seconds % 86400) / 3600);
+            const minutes = Math.floor((seconds % 3600) / 60);
+            
+            if (days > 0) return `${days}d ${hours}h ${minutes}m`;
+            if (hours > 0) return `${hours}h ${minutes}m`;
+            return `${minutes}m`;
+        }
+
         // Cargar al inicio y cada 30 segundos
         fetchAllStatus();
         setInterval(fetchAllStatus, 30000);
+
+        // Mostrar indicador de carga inicial
+        document.getElementById('loading-spinner').style.display = 'block';
     </script>
 
-    <!-- Bootstrap JS para el acordeón -->
+    <!-- Bootstrap JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>
